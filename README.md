@@ -60,9 +60,6 @@ For detailed architecture explanation, see [CODE_WALKTHROUGH.md](CODE_WALKTHROUG
 ### Setup
 
 #### 1. Clone or Extract the Project
-```bash
-cd "/Users/jack/Documents/Fall 2025/Software Development/CompanyZ_Project"
-```
 
 #### 2. (Optional) Configure Database
 If you have a MySQL database set up:
