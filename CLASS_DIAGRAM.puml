@@ -1,174 +1,215 @@
 @startuml
- ' CompanyZ_Project - UML Class Diagram (generated from source)
- ' Updated: December 11, 2025
+skinparam packageStyle rectangle
+skinparam defaultTextAlignment left
+left to right direction
 
-skinparam classAttributeIconSize 0
-
-package "UI" {
-  class AppLauncher {
-    +main(String[] args)
-  }
-
-  class MainApp {
-    -stage: Stage
-    -authService: AuthService
-    -employeeService: EmployeeService
-    -payrollService: PayrollService
-    -currentUser: User
-    +start(Stage)
-    -showLogin()
-    -showAdmin()
-    -showEmployee()
-  }
-}
-
+' =====================================================
+'                      MODELS
+' =====================================================
 package "Models" {
-  class Employee {
-    -empId:int
-    -name:String
-  }
+    class UserCredentials {
+        -username : String
+        -role : String
+        +isAdmin() : boolean
+        +isEmployee() : boolean
+    }
 
-  class PayrollRecord {
-    -empId:int
-    -salary:double
-    -payDate:LocalDate
-  }
+    class Employee {
+        -empId : int
+        -name : String
+    }
 
-  class EmployeeSearchResult {
-    -empId:int
-    -name:String
-    -salary:double
-  }
+    class EmployeeSearchResult {
+        -empId : int
+        -name : String
+        -salary : double
+    }
 
-  class Report {
-    -category:String
-    -totalPayment:double
-  }
+    class PayrollRecord {
+        -empId : int
+        -salary : double
+        -payDate : LocalDate
+    }
 
-  class UserCredentials {
-    -username:String
-    -role:String
-    +isAdmin():boolean
-    +isEmployee():boolean
-  }
+    class Report {
+        -category : String
+        -totalPayment : double
+    }
 }
 
-package "Users" {
-  abstract class User {
-    -username:String
-    -role:String
-    +displayDashboard()
-    +logout()
-  }
+' =====================================================
+'                  DATABASE LAYER
+' =====================================================
+package "BottomLayer" {
+    left to right direction
 
-  class AdminUser {
-    -employeeService:EmployeeService
-    -payrollService:PayrollService
-    +searchEmployees(String):String
-    +applySalaryRaise(double,double,double):int
-    +getJobTitleReport():String
-    +getDivisionReport():String
-  }
+    package "Repositories (interfaces)" {
+        interface IAuthRepository {
+            +validateLogin(String,String) : UserCredentials
+        }
+        interface IEmployeeRepository {
+            +searchEmployee(String) : List<EmployeeSearchResult>
+            +searchBySsn(String) : List<EmployeeSearchResult>
+            +getEmployeeById(int) : Employee
+        }
+        interface IPayrollRepository {
+            +getPayHistory(int) : List<PayrollRecord>
+            +updateSalaryRange(double,double,double) : int
+            +getTotalPayByJobTitle() : List<Report>
+            +getTotalPayByDivision() : List<Report>
+        }
+    }
 
-  class EmployeeUser {
-    -payrollService:PayrollService
-    +viewPayHistory():String
-    +getSalaryInfo():String
-  }
+    package "Repositories (impl)" {
+        class AuthRepository {
+            -SEARCH_QUERY : String
+            -GET_BY_ID_QUERY : String
+        }
+        class EmployeeRepository {
+            -SEARCH_QUERY : String
+            -SEARCH_BY_SSN_QUERY : String
+            -GET_BY_ID_QUERY : String
+        }
+        class PayrollRepository {
+            -GET_HISTORY_QUERY : String
+            -UPDATE_SALARY_QUERY : String
+        }
 
-  User <|-- AdminUser
-  User <|-- EmployeeUser
+        class MockAuthRepository {
+            demo credentials: admin/admin123, employee/emp123
+        }
+        class MockEmployeeRepository {
+            mock employee data with SSNs
+        }
+        class MockPayrollRepository {
+            simulated payroll data
+        }
+    }
+
+    package "Database" {
+        class DBConnection {
+            +getConnection() : Connection
+            +testConnection() : boolean
+        }
+    }
 }
 
-package "Services" {
-  class AuthService {
-    -authRepository:IAuthRepository
-    +login(String,String):UserCredentials
-    +isAdmin(UserCredentials):boolean
-    +isEmployee(UserCredentials):boolean
-  }
+' ================= Relationships (Bottom layer) ==================
 
-  class EmployeeService {
-    -employeeRepository:IEmployeeRepository
-    +searchEmployees(String):List
-    +formatSearchResults(List):String
-  }
+AuthRepository --|> IAuthRepository : implements
+EmployeeRepository --|> IEmployeeRepository : implements
+PayrollRepository --|> IPayrollRepository : implements
 
-  class PayrollService {
-    -payrollRepository:IPayrollRepository
-    +getPayHistory(int):List
-    +applySalaryRaise(double,double,double):int
-    +getJobTitleReport():List
-    +getDivisionReport():List
-    +formatPayHistory(List):String
-    +formatReport(List,String):String
-  }
-}
+MockAuthRepository --|> IAuthRepository : implements
+MockEmployeeRepository --|> IEmployeeRepository : implements
+MockPayrollRepository --|> IPayrollRepository : implements
 
-package "Database" {
-  class DBConnection {
-    +getConnection():Connection
-    +testConnection():boolean
-  }
-}
+AuthRepository ..> UserCredentials : uses
+EmployeeRepository ..> Employee : uses
+EmployeeRepository ..> EmployeeSearchResult : uses
+PayrollRepository ..> PayrollRecord : uses
+PayrollRepository ..> Report : uses
 
-package "Repositories" {
-  package "Interfaces" {
-    interface IAuthRepository
-    interface IEmployeeRepository
-    interface IPayrollRepository
-  }
-
-  package "Implementations" {
-    class AuthRepository
-    class EmployeeRepository
-    class PayrollRepository
-  }
-
-  package "Mock" {
-    class MockAuthRepository
-    class MockEmployeeRepository
-    class MockPayrollRepository
-  }
-}
-
-' Relations
-AppLauncher --> MainApp : calls
-MainApp --> AuthService : uses
-MainApp --> EmployeeService : uses
-MainApp --> PayrollService : uses
-
-AdminUser ..> EmployeeService : uses
-AdminUser ..> PayrollService : uses
-EmployeeUser ..> PayrollService : uses
-
-AuthService ..> IAuthRepository : depends on
-EmployeeService ..> IEmployeeRepository : depends on
-PayrollService ..> IPayrollRepository : depends on
-
-AuthRepository ..|> IAuthRepository
-EmployeeRepository ..|> IEmployeeRepository
-PayrollRepository ..|> IPayrollRepository
-
-MockAuthRepository ..|> IAuthRepository
-MockEmployeeRepository ..|> IEmployeeRepository
-MockPayrollRepository ..|> IPayrollRepository
-
-' Real repositories use DBConnection
 AuthRepository --> DBConnection : uses
 EmployeeRepository --> DBConnection : uses
 PayrollRepository --> DBConnection : uses
 
-' Models usage
-EmployeeRepository ..> Employee
-EmployeeRepository ..> EmployeeSearchResult
-PayrollRepository ..> PayrollRecord
-PayrollRepository ..> Report
-AuthRepository ..> UserCredentials
+' =====================================================
+'                     SERVICES
+' =====================================================
+package "Services" {
+    class AuthService {
+        -authRepository : IAuthRepository
+        +login(String,String) : UserCredentials
+        +isAdmin(UserCredentials) : boolean
+        +isEmployee(UserCredentials) : boolean
+    }
 
-note bottom of DBConnection
-  Active DBConnection class is at `src/database/DBConnection.java`
-  The legacy duplicate in repo root is not referenced by the project.
-end note
+    class EmployeeService {
+        -employeeRepository : IEmployeeRepository
+        +searchEmployees(String) : List
+        +formatSearchResults(List) : String
+    }
+
+    class PayrollService {
+        -payrollRepository : IPayrollRepository
+        +getPayHistory(int) : List
+        +applySalaryRaise(double,double,double) : int
+        +getJobTitleReport() : List
+        +getDivisionReport() : List
+        +formatPayHistory(List) : String
+        +formatReport(List,String) : String
+    }
+}
+
+' ================= Relationships (Services) ==================
+AuthService --> IAuthRepository : uses
+EmployeeService --> IEmployeeRepository : uses
+PayrollService --> IPayrollRepository : uses
+
+EmployeeService ..> EmployeeSearchResult
+PayrollService ..> PayrollRecord
+PayrollService ..> Report
+
+' =====================================================
+'                       USERS
+' =====================================================
+package "Users" {
+    class User {
+        -username : String
+        -role : String
+        +displayDashboard()
+        +logout()
+    }
+
+    class AdminUser {
+        -employeeService : EmployeeService
+        -payrollService : PayrollService
+        +searchEmployees(String) : String
+        +applySalaryRaise(double,double,double) : int
+        +getJobTitleReport() : String
+        +getDivisionReport() : String
+    }
+
+    class EmployeeUser {
+        -payrollService : PayrollService
+        +viewPayHistory() : String
+        +getSalaryInfo() : String
+    }
+}
+
+AdminUser ..> EmployeeService
+AdminUser ..> PayrollService
+EmployeeUser ..> PayrollService
+
+User <|-- AdminUser
+User <|-- EmployeeUser
+
+' =====================================================
+'                         UI
+' =====================================================
+package "UI" {
+    class AppLauncher {
+        +main(String[] args)
+    }
+
+    class MainApp {
+        -stage : Stage
+        -authService : AuthService
+        -employeeService : EmployeeService
+        -payrollService : PayrollService
+        -currentUser : User
+        +start(Stage)
+        +showLogin()
+        +showAdmin()
+        +showEmployee()
+    }
+}
+
+AppLauncher --> MainApp : calls
+MainApp --> AuthService : uses
+MainApp --> EmployeeService : uses
+MainApp --> PayrollService : uses
+MainApp --> User : holds
 
 @enduml

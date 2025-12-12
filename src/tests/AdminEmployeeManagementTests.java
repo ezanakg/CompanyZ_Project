@@ -22,6 +22,9 @@ import java.util.Map;
  */
 public class AdminEmployeeManagementTests {
     
+    private static final String EXCEPTION_PREFIX = "Exception occurred: ";
+    private static final String SEPARATOR = "────────────────────────────────────────────────────────────────";
+    
     private EmployeeService employeeService;
     private PayrollService payrollService;
     private IEmployeeRepository employeeRepository;
@@ -70,14 +73,12 @@ public class AdminEmployeeManagementTests {
      *        address = 'Georgia State University'
      * Expected Output: Employee details updated successfully and UI reflects changes
      */
-    public void testA1_UpdateEmployeeData() {
+    public void testUpdateEmployeeData() {
         String testName = "A1. Update Employee Data";
         
         try {
             // Setup: Create employee with initial data
             int empId = 1;
-            String originalName = "John Smith";
-            String originalJobTitle = "Developer";
             
             // Retrieve original employee
             Employee originalEmployee = employeeRepository.getEmployeeById(empId);
@@ -97,10 +98,7 @@ public class AdminEmployeeManagementTests {
             
             // Simulate update: Create updated employee object
             String newName = "John Doe";
-            String newJobTitle = "Software Engineer";
-            String newDivision = "Development";
             double newSalary = 85000.00;
-            String newPhone = "123-456-7890";
             String newAddress = "Georgia State University";
             
             // In a real implementation, repository would have an updateEmployee method
@@ -112,7 +110,7 @@ public class AdminEmployeeManagementTests {
             // Assertions
             boolean nameUpdated = updatedEmployee.getName().equals(newName);
             boolean salaryCorrect = newSalary == 85000.00;
-            boolean addressNotNull = newAddress != null && !newAddress.isEmpty();
+            boolean addressNotNull = !newAddress.isEmpty();
             
             if (nameUpdated && salaryCorrect && addressNotNull) {
                 results.put(testName, new TestResult(testName, true,
@@ -126,7 +124,7 @@ public class AdminEmployeeManagementTests {
             
         } catch (Exception e) {
             results.put(testName, new TestResult(testName, false,
-                "Exception occurred: " + e.getMessage()));
+                EXCEPTION_PREFIX + e.getMessage()));
         }
     }
     
@@ -141,7 +139,7 @@ public class AdminEmployeeManagementTests {
      * Expected Output: Employee information corresponding to employee ID 0001 
      *                  displayed for editing
      */
-    public void testA2_SearchForEmployee() {
+    public void testSearchForEmployee() {
         String testName = "A2. Search for an Employee (HR Admin)";
         
         try {
@@ -198,7 +196,7 @@ public class AdminEmployeeManagementTests {
             
         } catch (Exception e) {
             results.put(testName, new TestResult(testName, false,
-                "Exception occurred: " + e.getMessage()));
+                EXCEPTION_PREFIX + e.getMessage()));
         }
     }
     
@@ -213,7 +211,7 @@ public class AdminEmployeeManagementTests {
      * Expected Output: All employees earning below $60000 have been updated 
      *                  with a 3.5% increase
      */
-    public void testA3_UpdateSalaryWithinRange() {
+    public void testUpdateSalaryWithinRange() {
         String testName = "A3. Update Employee Salary Within a Range";
         
         try {
@@ -266,7 +264,73 @@ public class AdminEmployeeManagementTests {
                 "Invalid input: " + e.getMessage()));
         } catch (Exception e) {
             results.put(testName, new TestResult(testName, false,
-                "Exception occurred: " + e.getMessage()));
+                EXCEPTION_PREFIX + e.getMessage()));
+        }
+    }
+    
+    /**
+     * BONUS: Test SSN Search
+     * 
+     * Task Description: Search for an employee by Social Security Number (SSN).
+     * 
+     * Test Case:
+     * Input: ssn = "123-45-6789"
+     * Expected Output: Employee with matching SSN found and retrieved for editing
+     */
+    public void testSearchBySSN() {
+        String testName = "BONUS. Search Employee by SSN";
+        
+        try {
+            // Input: ssn = "123-45-6789"
+            String ssnToSearch = "123-45-6789";
+            
+            // Perform search using service
+            List<EmployeeSearchResult> searchResults = employeeService.searchBySsn(ssnToSearch);
+            
+            // Verify search results
+            if (searchResults == null || searchResults.isEmpty()) {
+                results.put(testName, new TestResult(testName, false,
+                    "No results found for SSN " + ssnToSearch));
+                return;
+            }
+            
+            // Get the first result
+            EmployeeSearchResult foundEmployee = searchResults.get(0);
+            
+            if (foundEmployee == null) {
+                results.put(testName, new TestResult(testName, false,
+                    "Failed to retrieve employee by SSN"));
+                return;
+            }
+            
+            // Retrieve full employee details for editing
+            Employee fullEmployee = employeeRepository.getEmployeeById(foundEmployee.getEmpId());
+            
+            if (fullEmployee == null) {
+                results.put(testName, new TestResult(testName, false,
+                    "Could not retrieve full employee details for editing"));
+                return;
+            }
+            
+            // Verify SSN matches
+            boolean ssnMatches = fullEmployee.getSsn() != null && fullEmployee.getSsn().equals(ssnToSearch);
+            boolean hasId = fullEmployee.getEmpId() > 0;
+            boolean hasName = fullEmployee.getName() != null && !fullEmployee.getName().isEmpty();
+            
+            if (ssnMatches && hasId && hasName) {
+                results.put(testName, new TestResult(testName, true,
+                    "Employee found by SSN - " +
+                    "ID: " + fullEmployee.getEmpId() + 
+                    " | Name: " + fullEmployee.getName() +
+                    " | SSN: " + ssnToSearch));
+            } else {
+                results.put(testName, new TestResult(testName, false,
+                    "SSN verification failed"));
+            }
+            
+        } catch (Exception e) {
+            results.put(testName, new TestResult(testName, false,
+                EXCEPTION_PREFIX + e.getMessage()));
         }
     }
     
@@ -283,14 +347,15 @@ public class AdminEmployeeManagementTests {
         System.out.println("Running tests...\n");
         
         // Run all tests
-        testA1_UpdateEmployeeData();
-        testA2_SearchForEmployee();
-        testA3_UpdateSalaryWithinRange();
+        testUpdateEmployeeData();
+        testSearchForEmployee();
+        testUpdateSalaryWithinRange();
+        testSearchBySSN();
         
         // Print results
-        System.out.println("────────────────────────────────────────────────────────────────");
+        System.out.println(SEPARATOR);
         System.out.println("Test Results:");
-        System.out.println("────────────────────────────────────────────────────────────────\n");
+        System.out.println(SEPARATOR + "\n");
         
         int passCount = 0;
         int failCount = 0;
@@ -305,10 +370,10 @@ public class AdminEmployeeManagementTests {
         }
         
         System.out.println();
-        System.out.println("────────────────────────────────────────────────────────────────");
+        System.out.println(SEPARATOR);
         System.out.println(String.format("Summary: %d Passed | %d Failed | %d Total", 
             passCount, failCount, passCount + failCount));
-        System.out.println("────────────────────────────────────────────────────────────────");
+        System.out.println(SEPARATOR);
         System.out.println();
         
         // Overall result

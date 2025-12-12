@@ -21,6 +21,11 @@ public class EmployeeRepository implements IEmployeeRepository {
         "JOIN payroll p ON e.empid = p.empid " +
         "WHERE e.name LIKE ? OR e.empid = ?";
     
+    private static final String SEARCH_BY_SSN_QUERY = 
+        "SELECT e.empid, e.name, p.salary FROM employees e " +
+        "JOIN payroll p ON e.empid = p.empid " +
+        "WHERE e.ssn = ?";
+    
     private static final String GET_BY_ID_QUERY = 
         "SELECT empid, name, job_title_id, division_id FROM employees WHERE empid = ?";
 
@@ -75,5 +80,34 @@ public class EmployeeRepository implements IEmployeeRepository {
             e.printStackTrace();
         }
         return null;
+    }
+
+    @Override
+    public List<EmployeeSearchResult> searchBySsn(String ssn) {
+        List<EmployeeSearchResult> results = new ArrayList<>();
+        
+        if (ssn == null || ssn.trim().isEmpty()) {
+            return results;
+        }
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(SEARCH_BY_SSN_QUERY)) {
+            stmt.setString(1, ssn);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    EmployeeSearchResult result = new EmployeeSearchResult(
+                        rs.getInt("empid"),
+                        rs.getString("name"),
+                        rs.getDouble("salary")
+                    );
+                    results.add(result);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Employee SSN search failed: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return results;
     }
 }

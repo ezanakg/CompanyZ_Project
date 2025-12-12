@@ -22,4 +22,11 @@ public interface IEmployeeRepository {
      * @return Employee if found, null otherwise
      */
     Employee getEmployeeById(int empId);
+
+    /**
+     * Searches for an employee by Social Security Number (SSN).
+     * @param ssn the employee's SSN (e.g., "123-45-6789")
+     * @return list of matching employee search results
+     */
+    List<EmployeeSearchResult> searchBySsn(String ssn);
 }

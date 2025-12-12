@@ -29,6 +29,18 @@ public class EmployeeService {
     }
 
     /**
+     * Searches for an employee by Social Security Number (SSN).
+     * @param ssn the employee's SSN (e.g., "123-45-6789")
+     * @return list of matching employees
+     */
+    public List<EmployeeSearchResult> searchBySsn(String ssn) {
+        if (ssn == null || ssn.trim().isEmpty()) {
+            return List.of();  // Return empty list instead of null
+        }
+        return employeeRepository.searchBySsn(ssn);
+    }
+
+    /**
      * Formats search results as readable strings.
      * @param results the search results
      * @return formatted string representation

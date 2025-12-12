@@ -7,12 +7,22 @@ package src.models;
 public class Employee {
     private int empId;
     private String name;
+    private String ssn;
     private int jobTitleId;
     private int divisionId;
 
     public Employee(int empId, String name, int jobTitleId, int divisionId) {
         this.empId = empId;
         this.name = name;
+        this.ssn = null;  // Default constructor without SSN
+        this.jobTitleId = jobTitleId;
+        this.divisionId = divisionId;
+    }
+
+    public Employee(int empId, String name, String ssn, int jobTitleId, int divisionId) {
+        this.empId = empId;
+        this.name = name;
+        this.ssn = ssn;
         this.jobTitleId = jobTitleId;
         this.divisionId = divisionId;
     }
@@ -22,6 +32,9 @@ public class Employee {
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+
+    public String getSsn() { return ssn; }
+    public void setSsn(String ssn) { this.ssn = ssn; }
 
     public int getJobTitleId() { return jobTitleId; }
     public void setJobTitleId(int jobTitleId) { this.jobTitleId = jobTitleId; }
