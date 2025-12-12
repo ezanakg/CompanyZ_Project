@@ -202,46 +202,6 @@ CompanyZ_Project/
 5. Results formatted and displayed in UI
 ```
 
-## ⚙️ Database Configuration
-
-### MySQL Setup (Optional)
-
-If you want to use a real database instead of demo mode:
-
-1. **Create the database:**
-   ```sql
-   CREATE DATABASE employeeData;
-   ```
-
-2. **Create required tables** (example schema):
-   ```sql
-   CREATE TABLE employee (
-       empId INT PRIMARY KEY,
-       name VARCHAR(100),
-       jobTitleId INT,
-       divisionId INT,
-       salary DECIMAL(10, 2)
-   );
-
-   CREATE TABLE payroll (
-       payrollId INT PRIMARY KEY AUTO_INCREMENT,
-       empId INT,
-       salary DECIMAL(10, 2),
-       payDate DATE,
-       FOREIGN KEY (empId) REFERENCES employee(empId)
-   );
-
-   CREATE TABLE auth (
-       username VARCHAR(50) PRIMARY KEY,
-       password VARCHAR(50),
-       role VARCHAR(20)  -- 'admin' or 'employee'
-   );
-   ```
-
-3. **Update credentials** in `src/database/DBConnection.java`
-
-4. **Populate sample data** as needed
-
 ### Demo Mode (No Database Required)
 
 If the database is unavailable:
